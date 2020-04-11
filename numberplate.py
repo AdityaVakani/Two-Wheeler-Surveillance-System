@@ -121,5 +121,4 @@ def numberplate_detect(img):
     bike_plate, _, _, _, _ = infer_image(net, layer_names, height, width, img, colors, labels, confidence,threshold)
     return bike_plate
 
-img=cv.imread("D:\\Programs\\test_data\\vid_1_1.jpeg")
-numberplate_detect(img)
+
