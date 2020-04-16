@@ -35,6 +35,20 @@ def overlap(b1,b2):
         return False
     return True
 
+def b2inb1(b1,b2):  #box2 in box1
+    x1=b1[0]
+    y1=b1[1]
+    w1=b1[2]
+    h1=b1[3]
+    x2=b2[0]
+    y2=b2[1]
+    w2=b2[2]
+    h2=b2[3]
+    if(x1<x2 and y1<y2 and x1+w1>x2+w2 and y1+h1>y2+h2):
+        return True
+    else:
+        return False
+
 #x are the co-ordinates
 def crop_img(img , k):
     x = k[0]
@@ -97,6 +111,14 @@ def overlap_check(personbike_boxes,head_boxes,helmet_array):
                 h_overlap.append(head_boxes[h_box])
                 #print("no helmet added")
     return[pb_overlap,h_overlap]
+
+
+
+def numberplate4bike(img,bike):
+    img,np_boxes = numberplate_detect(img.copy())
+    for np in np_boxes:
+        if b2inb1(bike,np):
+            return np
 
 
 
@@ -171,6 +193,7 @@ def infer_image(net, layer_names, height, width, img, colors, labels, confidence
         img = draw_labels_and_boxes(img.copy(), boxes, confidences, classids, idxs, colors, labels,personbike_boxes,head_boxes,helmet_array)
         overlaps=overlap_check(personbike_boxes,head_boxes,helmet_array)
         pb_overlap=overlaps[0]
+
         for k in(pb_overlap):
             curr_roi =[]
             #print(k)
@@ -180,12 +203,13 @@ def infer_image(net, layer_names, height, width, img, colors, labels, confidence
             h=k[3]
             #test_img=img[(y):((y + h)), (x):(x + w)]
             test_img=crop_img(img,k)
-            test_img,plate_box=numberplate_detect(test_img.copy())
+
+            plate_box = numberplate4bike(img,k)
             curr_roi.append(k)
-            if plate_box==[]:
+            if plate_box==None:
                 curr_roi.append(())
             else:
-                curr_roi.append(plate_box[0])
+                curr_roi.append(plate_box)
             bike_np_roi.append(curr_roi)
             cv.imshow("bike",test_img)
             cv.waitKey(5)

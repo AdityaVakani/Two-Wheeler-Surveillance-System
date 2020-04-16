@@ -60,7 +60,7 @@ if video_path:
                     bike_img = crop_img(frame.copy(), bike)
                     np=k[1]
                     if np!=():
-                        np_img = crop_img(bike_img.copy(), np)
+                        np_img = crop_img(frame.copy(), np)
                         cv.imshow("numberplate", np_img)
                         cv.waitKey(5)
                     #cv.imshow("bike", bike_img)
