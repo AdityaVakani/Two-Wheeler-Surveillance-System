@@ -5,7 +5,7 @@ import subprocess
 import time
 import os
 from fastai.vision import*
-from numberplate import numberplate_detect
+from numplate import numberplate_detect
 import PIL
 
 path=Path('.')
@@ -35,70 +35,70 @@ def overlap(b1,b2):
         return False
     return True
 
+#x are the co-ordinates
+def crop_img(img , k):
+    x = k[0]
+    y = k[1]
+    w = k[2]
+    h = k[3]
+    cropped = img[(y):((y + h)), (x):(x + w)]
+    return cropped
 
 
-def draw_labels_and_boxes(img, boxes, confidences, classids, idxs, colors, labels):
+def draw_labels_and_boxes(img, boxes, confidences, classids, idxs, colors, labels,personbike_boxes,head_boxes,helmet_array):
     # If there are any detections
-    if len(idxs) > 0:
-        personbike_boxes = []
-        head_boxes = []
-        pb_overlap = []
-        h_overlap = []
-        helmet_array=[]
-        for i in idxs.flatten():
-            j=len(idxs.flatten())-1
-            # Get the bounding box coordinates
-            x, y = boxes[i][0], boxes[i][1]
-            w, h = boxes[i][2], boxes[i][3]
-
-            # Get the unique color for this class
-            color = [int(c) for c in colors[classids[i]]]
-
-            # Draw the bounding box rectangle and label on the image
-            if classids[i] == 0:
-                personbike_boxes.append((x,y,w,h))
-                cv.rectangle(img, (x, y), (x + w, y + h), [255,0,0], 1)
-                text = "{}: {:4f}".format(labels[classids[i]], confidences[i])
-                #cv.putText(img, text, (x, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-            if classids[i] ==1:
-                if h/w>0.8 and h/w<1.4:
-                    cv.rectangle(img, (x, y), (x + w, y + h), [0,0,255], 1)
-                    #text = "{}: {:4f}".format(labels[classids[i]], confidences[i])
-                    head_roi=img[(y):((y + h)),(x):(x+w)]
-                    helmet_flag = helmet_check(head_roi)
-                    helmet_array.append(str(helmet_flag))
-                    head_boxes.append((x, y, w, h))
-                    cv.putText(img, " "+str(helmet_flag), (x, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, [0,0,0], 1)
-        #print(len(personbike_boxes),len(head_boxes))
-        for pb_box in range(len(personbike_boxes)):
-            for h_box in range(len(head_boxes)):
-                x1=personbike_boxes[pb_box][0]
-                w1=personbike_boxes[pb_box][2]
-                x2=head_boxes[h_box][0]
-                w2=head_boxes[h_box][2]
-                centre_distance = abs((2*x1+w1)/ 2 - (2*x2+w2) / 2)
-                # centre_distance=abs((2*personbike_boxes[pb_box][0]+personbike_boxes[pb_box][2])/2 - (2*head_boxes[h_box][0]+ head_boxes[h_box][2])/2)
-
-                if overlap(personbike_boxes[pb_box], head_boxes[h_box]) and centre_distance<40:
-                    print("overlap:"+str(centre_distance)+ "  " +str(helmet_array[h_box]))
 
 
-                if overlap(personbike_boxes[pb_box], head_boxes[h_box]) and centre_distance < 40 and helmet_array[h_box]=="nohelmet":
-                    pb_overlap.append(personbike_boxes[pb_box])
-                    h_overlap.append(head_boxes[h_box])
-                    print("no helmet added")
-        for k in(pb_overlap):
-            print(k)
-            x=k[0]
-            y=k[1]
-            w=k[2]
-            h=k[3]
-            test_img=img[(y):((y + h)), (x):(x + w)]
-            test_img=numberplate_detect(test_img)
-            cv.imshow("bike",test_img)
-            cv.waitKey(0)
+    for i in idxs.flatten():
+        j=len(idxs.flatten())-1
+        # Get the bounding box coordinates
+        x, y = boxes[i][0], boxes[i][1]
+        w, h = boxes[i][2], boxes[i][3]
 
+        # Get the unique color for this class
+        color = [int(c) for c in colors[classids[i]]]
+
+        # Draw the bounding box rectangle and label on the image
+        if classids[i] == 0:
+            personbike_boxes.append((x,y,w,h))
+            cv.rectangle(img, (x, y), (x + w, y + h), [255,0,0], 1)
+            text = "{}: {:4f}".format(labels[classids[i]], confidences[i])
+            #cv.putText(img, text, (x, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+        if classids[i] ==1:
+            if h/w>0.8 and h/w<1.4:
+                cv.rectangle(img, (x, y), (x + w, y + h), [0,0,255], 1)
+                #text = "{}: {:4f}".format(labels[classids[i]], confidences[i])
+                head_roi=img[(y):((y + h)),(x):(x+w)]
+                helmet_flag = helmet_check(head_roi)
+                helmet_array.append(str(helmet_flag))
+                head_boxes.append((x, y, w, h))
+                cv.putText(img, " "+str(helmet_flag), (x, y - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, [0,0,0], 1)
+    #print(len(personbike_boxes),len(head_boxes))
     return img
+
+def overlap_check(personbike_boxes,head_boxes,helmet_array):
+    pb_overlap = []
+    h_overlap = []
+    for pb_box in range(len(personbike_boxes)):
+        for h_box in range(len(head_boxes)):
+            x1=personbike_boxes[pb_box][0]
+            w1=personbike_boxes[pb_box][2]
+            x2=head_boxes[h_box][0]
+            w2=head_boxes[h_box][2]
+            centre_distance = abs((2*x1+w1)/ 2 - (2*x2+w2) / 2)
+            # centre_distance=abs((2*personbike_boxes[pb_box][0]+personbike_boxes[pb_box][2])/2 - (2*head_boxes[h_box][0]+ head_boxes[h_box][2])/2)
+            '''
+            if overlap(personbike_boxes[pb_box], head_boxes[h_box]) and centre_distance<40:
+                print("overlap:"+str(centre_distance)+ "  " +str(helmet_array[h_box]))
+            '''
+
+            if overlap(personbike_boxes[pb_box], head_boxes[h_box]) and centre_distance < 40 and helmet_array[h_box]=="nohelmet":
+                pb_overlap.append(personbike_boxes[pb_box])
+                h_overlap.append(head_boxes[h_box])
+                #print("no helmet added")
+    return[pb_overlap,h_overlap]
+
+
 
 
 
@@ -121,7 +121,6 @@ def generate_boxes_confidences_classids(outs, height, width, tconf):
 
             # Consider only the predictions that are above a certain confidence level
             if confidence > tconf and (classid==0 or classid==1):
-                # TODO Check detection
                 box = detection[0:4] * np.array([width, height, width, height])
                 centerX, centerY, bwidth, bheight = box.astype('int')
 
@@ -136,6 +135,7 @@ def generate_boxes_confidences_classids(outs, height, width, tconf):
                 classids.append(classid)
 
     return boxes, confidences, classids
+
 
 
 def infer_image(net, layer_names, height, width, img, colors, labels, confidence,threshold,
@@ -162,8 +162,34 @@ def infer_image(net, layer_names, height, width, img, colors, labels, confidence
 
     if boxes is None or confidences is None or idxs is None or classids is None:
         raise '[ERROR] Required variables are set to None before drawing boxes on images.'
-
     # Draw labels and boxes on the image
-    img = draw_labels_and_boxes(img, boxes, confidences, classids, idxs, colors, labels)
+    bike_np_roi=[]
+    if len(idxs) > 0:
+        helmet_array=[]
+        head_boxes=[]
+        personbike_boxes=[]
+        img = draw_labels_and_boxes(img.copy(), boxes, confidences, classids, idxs, colors, labels,personbike_boxes,head_boxes,helmet_array)
+        overlaps=overlap_check(personbike_boxes,head_boxes,helmet_array)
+        pb_overlap=overlaps[0]
+        for k in(pb_overlap):
+            curr_roi =[]
+            #print(k)
+            x=k[0]
+            y=k[1]
+            w=k[2]
+            h=k[3]
+            #test_img=img[(y):((y + h)), (x):(x + w)]
+            test_img=crop_img(img,k)
+            test_img,plate_box=numberplate_detect(test_img.copy())
+            curr_roi.append(k)
+            if plate_box==[]:
+                curr_roi.append(())
+            else:
+                curr_roi.append(plate_box[0])
+            bike_np_roi.append(curr_roi)
+            cv.imshow("bike",test_img)
+            cv.waitKey(5)
 
-    return img, boxes, confidences, classids, idxs
+    #if np_box !=[]:
+        #print(bike_roi,np_box)
+    return img,bike_np_roi,boxes, confidences, classids, idxs

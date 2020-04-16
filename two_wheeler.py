@@ -4,7 +4,7 @@ import cv2 as cv
 import subprocess
 import time
 import os
-from utils import infer_image, show_image
+from utils import infer_image, show_image,crop_img
 from fastai.vision import*
 import PIL
 
@@ -20,7 +20,7 @@ net.setPreferableBackend(cv.dnn.DNN_BACKEND_CUDA)
 net.setPreferableTarget(cv.dnn.DNN_TARGET_CUDA)
 
 
-video_path = "D:\\Programs\\test_data\\vid_1.mp4"
+video_path = "D:\\Programs\\Final Project\\test_data\\test_1.mp4"
 cap = cv.VideoCapture(video_path)
 layer_names = net.getLayerNames()
 layer_names = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
@@ -49,11 +49,27 @@ if video_path:
             if width is None or height is None:
                 height, width = frame.shape[:2]
             try:
-                frame, _, _, _, _ = infer_image(net, layer_names, height, width, frame, colors, labels, confidence,threshold)
-                cv.imshow('vid', frame)
+                frame1,bike_np_roi, _, _, _, _ = infer_image(net, layer_names, height, width, frame.copy(), colors, labels, confidence,threshold)
             except:
                 print("Skipping.................................................")
                 continue
+            if bike_np_roi != []:
+                for k in bike_np_roi:
+                    print(f'Bike co-ordinates {k[0]} , number plate co-ordinates {k[1]}')
+                    bike=k[0]
+                    bike_img = crop_img(frame.copy(), bike)
+                    np=k[1]
+                    if np!=():
+                        np_img = crop_img(bike_img.copy(), np)
+                        cv.imshow("numberplate", np_img)
+                        cv.waitKey(5)
+                    #cv.imshow("bike", bike_img)
+                    #cv.waitKey(5)
+
+
+
+            cv.imshow('vid', frame1)
+
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break
         vid.release()
