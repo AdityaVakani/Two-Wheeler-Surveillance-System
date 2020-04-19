@@ -1,12 +1,9 @@
 import numpy as np
-import argparse
 import cv2 as cv
-import subprocess
 import time
 import os
 from utils import infer_image, show_image,crop_img
-from fastai.vision import*
-import PIL
+from plate_recogniser_api import plate_reader
 
 confidence=0.5
 threshold=0.3
@@ -25,7 +22,8 @@ cap = cv.VideoCapture(video_path)
 layer_names = net.getLayerNames()
 layer_names = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
 
-
+dest="D:\\Programs\\Final Project\\saved_images_from_code\\"
+count=0
 
 
 if video_path:
@@ -54,13 +52,23 @@ if video_path:
                 print("Skipping.................................................")
                 continue
             if bike_np_roi != []:
+                wait_flag=0
                 for k in bike_np_roi:
-                    print(f'Bike co-ordinates {k[0]} , number plate co-ordinates {k[1]}')
+
+                    #print(f'Bike co-ordinates {k[0]} , number plate co-ordinates {k[1]}')
                     bike=k[0]
                     bike_img = crop_img(frame.copy(), bike)
                     np=k[1]
                     if np!=():
+                        wait_flag += 1
                         np_img = crop_img(frame.copy(), np)
+                        if wait_flag>1:
+                            time.sleep(1)
+                        np_chars= plate_reader(np_img)
+                        print(f'number plate is : {np_chars}')
+                        cv.imwrite(dest+"_bike_"+str(count)+".jpg",bike_img)
+                        cv.imwrite(dest+"_num_plate_"+str(count)+".jpg",np_img)
+                        count+=1
                         cv.imshow("numberplate", np_img)
                         cv.waitKey(5)
                     #cv.imshow("bike", bike_img)

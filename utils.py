@@ -209,6 +209,8 @@ def infer_image(net, layer_names, height, width, img, colors, labels, confidence
             if plate_box==None:
                 curr_roi.append(())
             else:
+                plate_box=(plate_box[0]-10,plate_box[1]-10,plate_box[2]+20,plate_box[3]+20)
+                #plate_box[3]+=10
                 curr_roi.append(plate_box)
             bike_np_roi.append(curr_roi)
             cv.imshow("bike",test_img)
