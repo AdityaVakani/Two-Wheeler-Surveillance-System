@@ -15,8 +15,9 @@ def plate_reader(img):
     if out['results']==[]:
          return "Can't read"
     num_plate = out['results'][0]['plate']
-    return num_plate
+    score=out['results'][0]['score']
+    return num_plate,score
 
-# img = cv2.imread('D:\\Programs\\Final Project\\saved_images_from_code\\_num_plate_0.jpg')
+# img = cv2.imread('D:\\Programs\\Final Project\\code_output\\wb01jc0137\\num_plate.jpg')
 # print(plate_reader(img))
 
