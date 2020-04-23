@@ -49,6 +49,15 @@ def b2inb1(b1,b2):  #box2 in box1
     else:
         return False
 
+
+def pt_inside_poly(poly, pt):
+    tl, tr, bl, br = poly[0], poly[1], poly[2], poly[3]
+    if cv.pointPolygonTest(np.array([tl,tr,br,bl,tl]), pt, False) > 0:
+        return True
+    else:
+        return False
+
+
 #x are the co-ordinates
 def crop_img(img , k):
     x = k[0]
@@ -114,11 +123,14 @@ def overlap_check(personbike_boxes,head_boxes,helmet_array):
 
 
 
-def numberplate4bike(img,bike):
+def numberplate4bike(img,bike,poly):
     img,np_boxes = numberplate_detect(img.copy())
     for np in np_boxes:
         if b2inb1(bike,np):
-            return np
+            x,y,w,h=np[0],np[1],np[2],np[3]
+            if pt_inside_poly(poly,(x+w/2,y+h/2)):
+                print("Plate inside")
+                return np
 
 
 
@@ -160,7 +172,7 @@ def generate_boxes_confidences_classids(outs, height, width, tconf):
 
 
 
-def infer_image(net, layer_names, height, width, img, colors, labels, confidence,threshold,
+def infer_image(net, layer_names, height, width, img, colors, labels, confidence,threshold,poly,
                 boxes=None, confidences=None, classids=None, idxs=None, infer=True):
     if infer:
         # Contructing a blob from the input image
@@ -204,7 +216,7 @@ def infer_image(net, layer_names, height, width, img, colors, labels, confidence
             #test_img=img[(y):((y + h)), (x):(x + w)]
             test_img=crop_img(img,k)
 
-            plate_box = numberplate4bike(img,k)
+            plate_box = numberplate4bike(img,k,poly)
             curr_roi.append(k)
             if plate_box==None:
                 curr_roi.append(())
@@ -214,7 +226,7 @@ def infer_image(net, layer_names, height, width, img, colors, labels, confidence
                 curr_roi.append(plate_box)
             bike_np_roi.append(curr_roi)
             cv.imshow("bike",test_img)
-            cv.waitKey(5)
+            cv.waitKey(1)
 
     #if np_box !=[]:
         #print(bike_roi,np_box)

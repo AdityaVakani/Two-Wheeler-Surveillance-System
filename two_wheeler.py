@@ -4,6 +4,7 @@ import time
 import os
 from utils import infer_image, show_image,crop_img
 from plate_recogniser_api import plate_reader
+from calibration import  calibrate
 
 confidence=0.5
 threshold=0.3
@@ -37,17 +38,20 @@ if video_path:
                            Please check the path provided!'
 
     finally:
+        count=0
         while True:
             grabbed, frame = vid.read()
-
             # Checking if the complete video is read
             if not grabbed:
                 break
-
+            count+=1
+            if count==1:
+                poly = calibrate(frame)
+                #print(poly)
             if width is None or height is None:
                 height, width = frame.shape[:2]
             try:
-                frame1,bike_np_roi, _, _, _, _ = infer_image(net, layer_names, height, width, frame.copy(), colors, labels, confidence,threshold)
+                frame1,bike_np_roi, _, _, _, _ = infer_image(net, layer_names, height, width, frame.copy(), colors, labels, confidence,threshold,poly)
             except:
                 print("Skipping.................................................")
                 continue
@@ -88,14 +92,16 @@ if video_path:
                         elif np_chars in read_plates:
                             print(f'Repeating plate detected , registration number  is : {np_chars} ')
                         cv.imshow("numberplate", np_img_text)
-                        cv.waitKey(5)
+                        cv.waitKey(1)
                     #cv.imshow("bike", bike_img)
                     #cv.waitKey(5)
 
 
 
             cv.imshow('vid', frame1)
-
+            if cv.waitKey(1) & 0xFF == ord('c'):
+                poly = calibrate(frame)
+                #print(poly)
             if cv.waitKey(1) & 0xFF == ord('q'):
                 break
         vid.release()
